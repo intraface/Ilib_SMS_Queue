@@ -106,7 +106,9 @@ class SMSQueueTest extends PHPUnit_Framework_TestCase
                 1 => 'tester', 
                 2 => "This is a test message! also with רזו",
                 3 => "11223344",
-                4 => $row[0][4]
+                4 => $row[0][4],
+                5 => 0,
+                6 => 0
             )
         );
         $this->assertEquals($expected, $row);
@@ -131,14 +133,18 @@ class SMSQueueTest extends PHPUnit_Framework_TestCase
                 1 => 'tester', 
                 2 => "This is a test message! also with רזו",
                 3 => "11223344",
-                4 => $row[0][4]
+                4 => $row[0][4],
+                5 => 0,
+                6 => 0
             ),
             1 => array(
                 0 => 2,
                 1 => 'tester', 
                 2 => "This is a test message! also with רזו",
                 3 => "11223366",
-                4 => $row[1][4]
+                4 => $row[1][4],
+                5 => 0,
+                6 => 0
             )
         );
         $this->assertEquals($expected, $row);
