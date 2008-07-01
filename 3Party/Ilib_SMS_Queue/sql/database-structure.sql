@@ -5,7 +5,7 @@
 `recipient` VARCHAR( 255 ) NOT NULL ,
 `date_queued` DATETIME NOT NULL ,
 `is_sent` TINYINT( 1 ) NOT NULL DEFAULT '0',
-`attempt` INT NOT NULL
+`attempt` INT NOT NULL DEFAULT '0'
 ) ENGINE = MYISAM ;
 
 CREATE TABLE `ilib_sms_queue_attempt` (
