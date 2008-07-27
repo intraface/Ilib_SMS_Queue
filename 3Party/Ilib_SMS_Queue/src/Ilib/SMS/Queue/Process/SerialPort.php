@@ -61,8 +61,8 @@ class Ilib_SMS_Queue_Process_SerialPort
         
         if($this->debug) echo $result->numRows() . " messages initialized \n\n";
         
-        // a 10 seconds span is given to send the last message.
-        while(($row = $result->fetchRow(MDB2_FETCHMODE_ASSOC)) && $start_time + $run_time - 10 > time()) {
+        // a 15 seconds span is given to send the last message.
+        while(($row = $result->fetchRow(MDB2_FETCHMODE_ASSOC)) && $start_time + $run_time - 15 > time()) {
             
             $insert_status = $this->db->exec('INSERT INTO ilib_sms_queue_attempt SET ilib_sms_queue_id = '.$row['id'].', date_started = NOW()');
             if(PEAR::isError($insert_status)) {
@@ -71,24 +71,16 @@ class Ilib_SMS_Queue_Process_SerialPort
             $status_id = $this->db->lastInsertID('ilib_sms_queue_attempt', 'id');
             
             $this->serialport->sendMessage('AT+CMGS="+45'.$row['recipient'].'"'.chr(13));
-            $this->serialport->sendMessage($row['message'].chr(26).chr(13));
+            $this->serialport->sendMessage($row['message'].chr(26).chr(13), 1);
             
             if($this->debug) echo "Message send. Waiting for response";
             
             $response_start_time = time();
-            $got_response = false;
             $success = false;
-            while(!$got_response && $response_start_time + 10 > time()) {
-                if($this->debug) echo ".";
-                $response = $this->parseResponse($this->serialport->readPort());
-                if($response == 'OK') {
-                    $success = true;
-                    $got_response = true;
-                    break;
-                } elseif(substr($response, 0, 5) == 'ERROR') {
-                    $got_response = true;
-                }
-                usleep(1000000); /* wait one second to read again */
+            
+            $response = $this->parseResponse($this->serialport->readPort());
+            if($response == 'OK') {
+                $success = true;
             }
             
             if($this->debug) echo " Recieved response: ".$response."\n";
