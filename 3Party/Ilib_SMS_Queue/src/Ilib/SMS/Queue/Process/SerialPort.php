@@ -8,6 +8,7 @@
  * @package  Ilib_SMS_Queue
  * @author   Sune Jensen <sj@sunet.dk>
  * @author   Lars Olesen <lars@legestue.net>
+ * @version  @@VERSION@@
  */
 
 /**
@@ -62,7 +63,7 @@ class Ilib_SMS_Queue_Process_SerialPort
         if ($this->debug) echo $result->numRows() . " messages initialized \n\n";
 
         // a 15 seconds span is given to send the last message.
-        while(($row = $result->fetchRow(MDB2_FETCHMODE_ASSOC)) && $start_time + $run_time - 15 > time()) {
+        while(($row = $result->fetchRow(MDB2_FETCHMODE_ASSOC)) && $start_time + $run_time - 20 > time()) {
 
             $insert_status = $this->db->exec('INSERT INTO ilib_sms_queue_attempt SET ilib_sms_queue_id = '.$row['id'].', date_started = NOW()');
             if (PEAR::isError($insert_status)) {
@@ -76,14 +77,12 @@ class Ilib_SMS_Queue_Process_SerialPort
             if ($this->debug) echo "Message send. Waiting for response";
 
             $response_start_time = time();
-            $success = false;
+            $success = 0;
 
             $response = $this->parseResponse($this->serialport->readPort());
-            if ($response == 'OK') {
-                $success = true;
+            if ($this->isResponseOk($response)) {
+                $success = 1;
             }
-
-            if ($this->debug) echo " Recieved response: ".$response."\n";
 
             // make sure response is not more than 255 chars long to save in db.
             $response = substr($response, 0, 255);
@@ -93,13 +92,24 @@ class Ilib_SMS_Queue_Process_SerialPort
                 throw new Exception('Error in query: '.$update_attempt->getUserInfo());
             }
 
-            $update_queue = $this->db->exec('UPDATE ilib_sms_queue SET is_sent = '.$this->db->quote($success, 'boolean').', attempt = attempt + 1 WHERE id = '.$this->db->quote($row['id'], 'integer'));
+            $update_queue = $this->db->exec('UPDATE ilib_sms_queue SET is_sent = '.$this->db->quote($success, 'integer').', attempt = attempt + 1 WHERE id = '.$this->db->quote($row['id'], 'integer'));
             if (PEAR::isError($update_queue)) {
                 throw new Exception('Error in query: '.$update_queue->getUserInfo());
             }
 
-            if ($this->debug) echo "Status updated\n\n";
+            if ($this->debug) {
+                echo "Status updated\n\n";
+            }
+
+            // @todo this is a hack to make it work
+            $this->serialport->deviceClose();
+            $this->serialport->deviceOpen();
         }
+    }
+
+    private function isResponseOk($response)
+    {
+        return ($response == 'OK');
     }
 
     /**
@@ -125,6 +135,14 @@ class Ilib_SMS_Queue_Process_SerialPort
      */
     private function parseResponse($response)
     {
-        return trim(substr($response, strrpos($response, PHP_EOL)));
+        $retur = trim(substr($response, strrpos($response, PHP_EOL) - 2));
+        if ($this->debug) {
+            echo "\n\nRecieved response\n";
+            echo $response . "\n\n";
+            echo "Parsed response\n\n";
+            echo $retur;
+        }
+
+        return $retur;
     }
 }
