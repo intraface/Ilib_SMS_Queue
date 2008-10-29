@@ -15,3 +15,8 @@ CREATE TABLE `ilib_sms_queue_attempt` (
 `date_ended` DATETIME NOT NULL ,
 `status` VARCHAR( 255 ) NOT NULL
 ) ENGINE = MYISAM ;
+
+
+ALTER TABLE `ilib_sms_queue_attempt` ADD INDEX ( `ilib_sms_queue_id` );
+ALTER TABLE `ilib_sms_queue_attempt` CHANGE `date_ended` `date_ended` DATETIME NOT NULL DEFAULT '0000-00-00';
+ALTER TABLE `ilib_sms_queue_attempt` CHANGE `date_started` `date_started` DATETIME NOT NULL DEFAULT '0000-00-00';
